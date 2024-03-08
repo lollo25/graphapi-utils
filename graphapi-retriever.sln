@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.34031.279
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Graphapi.Groups.Retriever", "Graphapi.Groups.Retriever\Graphapi.Groups.Retriever.csproj", "{943F0B82-63B3-4B24-9762-BB610AE636AE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{31A737DD-2AC3-45EE-B277-337A319F6FAA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Graphapi.Groups.Retriever.Unit.Tests", "tests\Graphapi.Groups.Retriever.Unit.Tests\Graphapi.Groups.Retriever.Unit.Tests.csproj", "{A825CDB5-654E-4AF9-ADB7-1A3B266A81CA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{943F0B82-63B3-4B24-9762-BB610AE636AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{943F0B82-63B3-4B24-9762-BB610AE636AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{943F0B82-63B3-4B24-9762-BB610AE636AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{943F0B82-63B3-4B24-9762-BB610AE636AE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A825CDB5-654E-4AF9-ADB7-1A3B266A81CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A825CDB5-654E-4AF9-ADB7-1A3B266A81CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A825CDB5-654E-4AF9-ADB7-1A3B266A81CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A825CDB5-654E-4AF9-ADB7-1A3B266A81CA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A825CDB5-654E-4AF9-ADB7-1A3B266A81CA} = {31A737DD-2AC3-45EE-B277-337A319F6FAA}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8F53F872-DAEB-4446-935D-9A1CD9E96FD4}
+	EndGlobalSection
+EndGlobal
