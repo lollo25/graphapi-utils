@@ -27,7 +27,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\Graphapi.Groups.Retriever\Graphapi.Groups.Retriever.csproj" />
+	  <ProjectReference Include="..\..\Graphapi.Utils\Graphapi.Utils.csproj" />
 	</ItemGroup>
 
 </Project>

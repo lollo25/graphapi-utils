@@ -1,7 +1,7 @@
 ﻿using FluentAssertions;
 using Flurl;
-using Graphapi.Groups.Retriever.Models;
-using Graphapi.Groups.Retriever.Services;
+using Graphapi.Utils.Models;
+using Graphapi.Utils.Services;
 using LanguageExt.Common;
 using LanguageExt.UnitTesting;
 using Moq;
@@ -12,7 +12,7 @@ using System.CommandLine;
 using System.Net;
 using System.Net.Http;
 
-namespace Graphapi.Groups.Retriever.Unit.Tests.Services;
+namespace Graphapi.Utils.Unit.Tests.Services;
 
 [TestFixture]
 public class GraphApiAuthorizationProviderTests

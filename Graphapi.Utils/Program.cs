@@ -1,5 +1,5 @@
-﻿using Graphapi.Groups.Retriever.Models;
-using Graphapi.Groups.Retriever.Services;
+﻿using Graphapi.Utils.Models;
+using Graphapi.Utils.Services;
 using LanguageExt.UnsafeValueAccess;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
@@ -9,7 +9,7 @@ using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.NamingConventionBinder;
 using System.CommandLine.Parsing;
-using Constants = Graphapi.Groups.Retriever.Constants;
+using Constants = Graphapi.Utils.Constants;
 
 var services = 
     new ServiceCollection()

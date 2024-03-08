@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Graphapi.Groups.Retriever.Models;
+namespace Graphapi.Utils.Models;
 public record ClientCredentialsToken
 {
     [JsonPropertyName("access_token")]

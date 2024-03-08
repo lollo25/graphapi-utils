@@ -1,4 +1,4 @@
-﻿namespace Graphapi.Groups.Retriever;
+﻿namespace Graphapi.Utils;
 internal static class Constants
 {
     internal const string MicrosoftLoginClient = "MSFT_LOGIN_CLIENT";

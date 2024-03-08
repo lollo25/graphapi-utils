@@ -1,10 +1,11 @@
-﻿using Graphapi.Groups.Retriever.Models;
+﻿using Graphapi.Utils;
+using Graphapi.Utils.Models;
 using LanguageExt;
 using LanguageExt.Common;
 using System.Text.Json;
 using static LanguageExt.Prelude;
 
-namespace Graphapi.Groups.Retriever.Services;
+namespace Graphapi.Utils.Services;
 public class GraphApiAuthorizationProvider : IAuthorizationProvider
 {
     private const string ClientIdParam = "client_id";
