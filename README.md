@@ -3,7 +3,7 @@
 ![GitHub CI](https://github.com/lollo25/graphapi-utils/actions/workflows/main.yaml/badge.svg)
 [![codecov](https://codecov.io/gh/lollo25/graphapi-utils/graph/badge.svg?token=GY0WCYGA4S)](https://codecov.io/gh/lollo25/graphapi-utils)
 
-This is a CLI able to save locally groops taken from Microsoft Graph API.
+This is a CLI able to save locally groups taken from Microsoft Graph API.
 
 # How to run
 
