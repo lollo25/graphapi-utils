@@ -24,6 +24,8 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
+		<PackageReference Include="Polly.Testing" Version="8.3.1" />
+		<PackageReference Include="System.IO.Abstractions.TestingHelpers" Version="20.0.28" />
 	</ItemGroup>
 
 	<ItemGroup>

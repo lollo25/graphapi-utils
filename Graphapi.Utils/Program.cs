@@ -9,6 +9,7 @@ using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.NamingConventionBinder;
 using System.CommandLine.Parsing;
+using System.IO.Abstractions;
 using Constants = Graphapi.Utils.Constants;
 
 var services =
@@ -26,7 +27,8 @@ var services =
         .Decorate<IAuthorizationProvider, LoggedAuthorizationProvider>()
         .AddSingleton(typeof(IListDownloader<>), typeof(ListDownloader<>))
         .AddSingleton(typeof(IGraphApiClient<>), typeof(GraphApiClient<>))
-        .AddSingleton(typeof(IListFileSystemSaver<>), typeof(ListFileSystemSaver<>));
+        .AddSingleton(typeof(IListFileSystemSaver<>), typeof(ListFileSystemSaver<>))
+        .AddSingleton<IFileSystem, FileSystem>();
 
 services
     .AddHttpClient(
@@ -37,7 +39,7 @@ services
         Constants.GraphApiClient);
 
 var topOption = new Option<int>(new[] { "--top" }, getDefaultValue: () => 100, "The page size of each request.");
-var toDirOption = new Option<string>(new[] { "--directory", "-dir" }, getDefaultValue: () => "/MSGraph/Groups", "The directory where the items will be saved into.");
+var toDirOption = new Option<string>(new[] { "--directory", "-dir" }, getDefaultValue: () => "/MSGraph/Groups", "The directory where the items will be saved into.") { IsRequired = true };
 var groupsRetrieveCommand = new Command("download-groups");
 groupsRetrieveCommand.AddOption(topOption);
 groupsRetrieveCommand.AddOption(toDirOption);
@@ -46,7 +48,7 @@ groupsRetrieveCommand.Handler = CommandHandler.Create<ListDownloaderOptions, ISe
     var downloader = sp.GetRequiredService<IListDownloader<GraphApiGroup>>();
     var saver = sp.GetRequiredService<IListFileSystemSaver<GraphApiGroup>>();
     var logger = sp.GetRequiredService<ILogger>();
-    await downloader.DownloadAsync("groups", o, ResiliencePipelines.RetryOnThrottle<GraphApiGroup>(), ct)
+    await downloader.DownloadAsync("groups", o, ResiliencePipelines.RetryOnThrottle<GraphApiGroup>(logger), ct)
         .Bind(_ => saver.SaveAsync(_, g => $"{g.DisplayName}.json", o))
         .Match(
             list =>
@@ -63,9 +65,9 @@ groupsRetrieveCommand.Handler = CommandHandler.Create<ListDownloaderOptions, ISe
 
 var rootCommand = new RootCommand { groupsRetrieveCommand };
 var verboseOption = new Option<bool>(new[] { "--verbose", "-v" }, "Lowers minimum logging level to debug");
-var tenantOption = new Option<string>(new[] { "--tenant", "-t" }, "The directory tenant that you want to request permission from. The value can be in GUID or a friendly name format.");
-var appIdOption = new Option<string>(new[] { "--app-id", "-aid" }, "The application ID that the Azure app registration portal assigned when you registered your app");
-var secretOption = new Option<string>(new[] { "--app-secret", "-as" }, "The client secret that you generated for your app in the app registration portal.");
+var tenantOption = new Option<string>(new[] { "--tenant", "-t" }, "The directory tenant that you want to request permission from. The value can be in GUID or a friendly name format.") { IsRequired = true };
+var appIdOption = new Option<string>(new[] { "--app-id", "-aid" }, "The application ID that the Azure app registration portal assigned when you registered your app") { IsRequired = true };
+var secretOption = new Option<string>(new[] { "--app-secret", "-as" }, "The client secret that you generated for your app in the app registration portal.") { IsRequired = true };
 rootCommand.AddGlobalOption(verboseOption);
 rootCommand.AddGlobalOption(tenantOption);
 rootCommand.AddGlobalOption(appIdOption);
