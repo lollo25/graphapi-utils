@@ -8,3 +8,4 @@
 ## Limitations
 
 - Groups are all kept in memory before the saving for the sake of simplicity, therefore this might cause high memory allocation in case of a large number of groups. If this case must be covered, the application should save each page as soon as it is retrieved.
+- Group model is phisically mapped into c# class for the sake of simplicity. An automatic mapper using Source Generators would be more flexible and solid.
