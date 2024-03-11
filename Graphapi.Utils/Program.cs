@@ -24,11 +24,11 @@ var services =
                     .CreateLogger();
             })
         .AddSingleton<IAuthorizationProvider, GraphApiAuthorizationProvider>()
-        .Decorate<IAuthorizationProvider, LoggedAuthorizationProvider>()
         .AddSingleton(typeof(IListDownloader<>), typeof(ListDownloader<>))
         .AddSingleton(typeof(IGraphApiClient<>), typeof(GraphApiClient<>))
         .AddSingleton(typeof(IListFileSystemSaver<>), typeof(ListFileSystemSaver<>))
-        .AddSingleton<IFileSystem, FileSystem>();
+        .AddSingleton<IFileSystem, FileSystem>()
+        .AddSingleton(typeof(IListProcessor<>), typeof(GenericListProcessor<>));
 
 services
     .AddHttpClient(
@@ -69,22 +69,8 @@ groupsRetrieveCommand.AddOption(graphApiRootUrlOption);
 groupsRetrieveCommand.AddOption(graphApiVersionOption);
 groupsRetrieveCommand.Handler = CommandHandler.Create<ListDownloaderOptions, IServiceProvider, CancellationToken>(async (o, sp, ct) =>
 {
-    var downloader = sp.GetRequiredService<IListDownloader<GraphApiGroup>>();
-    var saver = sp.GetRequiredService<IListFileSystemSaver<GraphApiGroup>>();
-    var logger = sp.GetRequiredService<ILogger>();
-    await downloader.DownloadAsync("groups", o, ResiliencePipelines.RetryOnThrottle<GraphApiGroup>(logger), ct)
-        .Bind(_ => saver.SaveAsync(_, g => $"{g.DisplayName}.json", o))
-        .Match(
-            list =>
-            {
-                logger.Information($"Groups are {list.Length()}");
-                foreach (var item in list)
-                {
-                    logger.Information($"Group saved to {item}");
-                }
-            },
-            err => logger.Error($"Error: {err.Message}"));
-    return await Task.FromResult(0);
+    var processor = sp.GetRequiredService<IListProcessor<GraphApiGroup>>();
+    return await processor.ProcessAsync(o, ct);
 });
 
 var rootCommand = new RootCommand { groupsRetrieveCommand };
