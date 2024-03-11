@@ -1,6 +1,6 @@
-﻿using Graphapi.Utils.Models;
+﻿using Graphapi.Utils;
+using Graphapi.Utils.Models;
 using Graphapi.Utils.Services;
-using LanguageExt.UnsafeValueAccess;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Serilog.Core;
@@ -11,7 +11,7 @@ using System.CommandLine.NamingConventionBinder;
 using System.CommandLine.Parsing;
 using Constants = Graphapi.Utils.Constants;
 
-var services = 
+var services =
     new ServiceCollection()
         .AddSingleton(new LoggingLevelSwitch())
         .AddSingleton<ILogger>(sp =>
@@ -22,22 +22,46 @@ var services =
                     .Console()
                     .CreateLogger();
             })
-        .AddSingleton<IAuthorizationProvider, GraphApiAuthorizationProvider>();
-services
-    .AddHttpClient(Constants.MicrosoftLoginClient, sp => sp.BaseAddress = new Uri("https://login.microsoftonline.com"));
+        .AddSingleton<IAuthorizationProvider, GraphApiAuthorizationProvider>()
+        .Decorate<IAuthorizationProvider, LoggedAuthorizationProvider>()
+        .AddSingleton(typeof(IListDownloader<>), typeof(ListDownloader<>))
+        .AddSingleton(typeof(IGraphApiClient<>), typeof(GraphApiClient<>))
+        .AddSingleton(typeof(IListFileSystemSaver<>), typeof(ListFileSystemSaver<>));
 
-var helloCommand = new Command("download-groups");
-helloCommand.Handler = CommandHandler.Create<AuthenticationOptions, IServiceProvider, CancellationToken>(async (ao, sp, ct) =>
+services
+    .AddHttpClient(
+        Constants.MicrosoftLoginClient, 
+        sp => sp.BaseAddress = new Uri("https://login.microsoftonline.com"));
+services
+    .AddHttpClient(
+        Constants.GraphApiClient);
+
+var topOption = new Option<int>(new[] { "--top" }, getDefaultValue: () => 100, "The page size of each request.");
+var toDirOption = new Option<string>(new[] { "--directory", "-dir" }, getDefaultValue: () => "/MSGraph/Groups", "The directory where the items will be saved into.");
+var groupsRetrieveCommand = new Command("download-groups");
+groupsRetrieveCommand.AddOption(topOption);
+groupsRetrieveCommand.AddOption(toDirOption);
+groupsRetrieveCommand.Handler = CommandHandler.Create<ListDownloaderOptions, IServiceProvider, CancellationToken>(async (o, sp, ct) =>
 {
+    var downloader = sp.GetRequiredService<IListDownloader<GraphApiGroup>>();
+    var saver = sp.GetRequiredService<IListFileSystemSaver<GraphApiGroup>>();
     var logger = sp.GetRequiredService<ILogger>();
-    logger.Information("INFO " + ao.Tenant);
-    var service = ActivatorUtilities.GetServiceOrCreateInstance<IAuthorizationProvider>(sp)!;
-    var res = await service.AuthenticateAsync(ao, ct);
-    logger.Information("AT: " + res.ValueUnsafe().AccessToken);
+    await downloader.DownloadAsync("groups", o, ResiliencePipelines.RetryOnThrottle<GraphApiGroup>(), ct)
+        .Bind(_ => saver.SaveAsync(_, g => $"{g.DisplayName}.json", o))
+        .Match(
+            list =>
+            {
+                logger.Information($"Groups are {list.Length()}");
+                foreach (var item in list)
+                {
+                    logger.Information($"Group saved to {item}");
+                }
+            },
+            err => logger.Error($"Error: {err.Message}"));
     return await Task.FromResult(0);
 });
 
-var rootCommand = new RootCommand { helloCommand };
+var rootCommand = new RootCommand { groupsRetrieveCommand };
 var verboseOption = new Option<bool>(new[] { "--verbose", "-v" }, "Lowers minimum logging level to debug");
 var tenantOption = new Option<string>(new[] { "--tenant", "-t" }, "The directory tenant that you want to request permission from. The value can be in GUID or a friendly name format.");
 var appIdOption = new Option<string>(new[] { "--app-id", "-aid" }, "The application ID that the Azure app registration portal assigned when you registered your app");
