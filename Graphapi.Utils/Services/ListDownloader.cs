@@ -38,10 +38,10 @@ public class ListDownloader<T> : IListDownloader<T>
         EitherAsync<Error, GraphApiPagedResponse<T>> GetAsync(
             string address) =>
                 resiliencePipeline.Execute(token =>
-                    _client.GetAsync(address, clientCredentials.AccessToken, cancellationToken),
+                    _client.GetPagedAsync(address, clientCredentials.AccessToken, cancellationToken),
                     cancellationToken).Map(_ => _.ValueUnsafe());
         return 
-            GetAsync($"{Constants.GraphApiRootUrl}/{Constants.GraphApiVersion}/{path}?$top={options.PageSize}")
+            GetAsync($"{options.GraphApiRootUrl}/{options.GraphApiVersion}/{path}?$top={options.PageSize}")
                 .Bind(_ =>
                     TailRecursion
                         .ExecuteAsync(() => Execute(_, GetAsync))

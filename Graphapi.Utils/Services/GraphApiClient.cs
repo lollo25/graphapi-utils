@@ -18,13 +18,13 @@ public class GraphApiClient<T> : IGraphApiClient<T>
             var client = httpClientFactory.CreateClient(Constants.GraphApiClient);
             client.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue(
-                    "Bearer",
+                    Constants.LoginAuthScheme,
                     accessToken);
             return client;
         };
     }
 
-    public EitherAsync<Error, Either<ThrottledResponse, GraphApiPagedResponse<T>>> GetAsync(
+    public EitherAsync<Error, Either<ThrottledResponse, GraphApiPagedResponse<T>>> GetPagedAsync(
         string address,
         string accessToken,
         CancellationToken cancellationToken) =>
@@ -46,19 +46,22 @@ public class GraphApiClient<T> : IGraphApiClient<T>
                 TryAsync(async () =>
                         await JsonSerializer.DeserializeAsync<GraphApiPagedResponse<T>>(await response.Content.ReadAsStreamAsync()))
                 .ToEither()
-                .Map(_ => (Either<ThrottledResponse, GraphApiPagedResponse<T>>)_!),
+                .BiMap(
+                    _ => (Either<ThrottledResponse, GraphApiPagedResponse<T>>)_!,
+                    err => Error.New((int)response.StatusCode, "The request was successful but the serialization of the error model fails.")),
             _ =>
                 TryAsync(async () =>
                         (await JsonSerializer.DeserializeAsync<GraphApiError>(await response.Content.ReadAsStreamAsync())))
                 .ToEither()
-                .Bind(_ =>
-                    (EitherAsync<Error, Either<ThrottledResponse, GraphApiPagedResponse<T>>>)Error.New(_!.Error.Message))
+                .Match(
+                    _ => Error.New((int)response.StatusCode, $"The request was not successful with message: {_!.Error.Message}"),
+                    err => Error.New((int)response.StatusCode, "The request was not successful and the serialization of the error model fails."))
         };
 
     private static ThrottledResponse CreateThrottledResponse(HttpResponseMessage response) =>
         response
             .Headers
-            .Find(kvp => kvp.Key == "Retry-After")
+            .Find(kvp => kvp.Key == Constants.TooManyRequestRetryAfterHeaderKey)
             .Map(kvp => new ThrottledResponse { RetryAfter = Convert.ToInt32(kvp.Value.First()) })
             .IfNone(new ThrottledResponse());
 }

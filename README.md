@@ -1,3 +1,32 @@
+# GraphAPI utils
+
+This is a CLI able to save locally groops taken from Microsoft Graph API.
+
+# How to run
+
+The CLi interface guides the user in setting the options in order to make the application work.
+
+For example, to have the helper for the `download-groups` command you should run in powershell
+
+```ps
+.\Graphapi.Utils.exe "download-groups" --help
+```
+
+or in bash
+
+```bash
+./Graphapi.Utils "download-groups" --help
+```
+
+and you will have this output
+![help](./doc/ps-downloadgroups-help.png)
+
+The following command will do the job with default options:
+
+```bash
+./Graphapi.Utils  download-groups -t {Tenant ID} -aid {App ID} -as {Secret}
+```
+
 ## Assumptions
 
 - It is a CLI that starts, execute a command and dies; therefore:

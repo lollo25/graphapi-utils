@@ -30,7 +30,15 @@ public class ListDownloaderTests
         _accessToken = "AT";
         _mockAuthorizationProvider = new Mock<IAuthorizationProvider>();
         _mockGraphApiClient = new Mock<IGraphApiClient<int>>();
-        _options = new ListDownloaderOptions { AppId = "aid", AppSecret = "as", Tenant = "t", PageSize = 10 };
+        _options = new ListDownloaderOptions
+        {
+            AppId = "aid",
+            AppSecret = "as",
+            Tenant = "t",
+            PageSize = 10,
+            GraphApiRootUrl = "https://graph.microsoft.com",
+            GraphApiVersion = "v1.0"
+        };
         _cancellationTokenSource = new CancellationTokenSource();
         _sut = new ListDownloader<int>(
             _mockAuthorizationProvider.Object,
@@ -57,7 +65,7 @@ public class ListDownloaderTests
             .Setup(_ => _.AuthenticateAsync(_options, _cancellationTokenSource.Token))
             .Returns(new ClientCredentialsToken { AccessToken = _accessToken });
         _mockGraphApiClient
-            .Setup(_ => _.GetAsync("https://graph.microsoft.com/v1.0/PATH?$top=10", _accessToken, _cancellationTokenSource.Token))
+            .Setup(_ => _.GetPagedAsync("https://graph.microsoft.com/v1.0/PATH?$top=10", _accessToken, _cancellationTokenSource.Token))
             .Returns(Either<ThrottledResponse, GraphApiPagedResponse<int>>.Right(new GraphApiPagedResponse<int> { Value = new[] { 1, 2 } }));
 
         var result = await _sut.DownloadAsync(_path, _options, _emptyResiliencePipeline, _cancellationTokenSource.Token);
@@ -72,14 +80,14 @@ public class ListDownloaderTests
             .Setup(_ => _.AuthenticateAsync(_options, _cancellationTokenSource.Token))
             .Returns(new ClientCredentialsToken { AccessToken = _accessToken });
         _mockGraphApiClient
-            .Setup(_ => _.GetAsync("https://graph.microsoft.com/v1.0/PATH?$top=10", _accessToken, _cancellationTokenSource.Token))
+            .Setup(_ => _.GetPagedAsync("https://graph.microsoft.com/v1.0/PATH?$top=10", _accessToken, _cancellationTokenSource.Token))
             .Returns(Either<ThrottledResponse, GraphApiPagedResponse<int>>.Right(new GraphApiPagedResponse<int>
             {
                 Value = new[] { 1, 2 },
                 Next = new Uri("http://nextpage")
             }));
         _mockGraphApiClient
-            .Setup(_ => _.GetAsync("http://nextpage/", _accessToken, _cancellationTokenSource.Token))
+            .Setup(_ => _.GetPagedAsync("http://nextpage/", _accessToken, _cancellationTokenSource.Token))
             .Returns(Either<ThrottledResponse, GraphApiPagedResponse<int>>.Right(new GraphApiPagedResponse<int>
             {
                 Value = new[] { 1, 2 }
@@ -88,7 +96,7 @@ public class ListDownloaderTests
         await _sut.DownloadAsync(_path, _options, _emptyResiliencePipeline, _cancellationTokenSource.Token);
 
         _mockGraphApiClient
-           .Verify(_ => _.GetAsync("http://nextpage/", _accessToken, _cancellationTokenSource.Token), Times.Once());
+           .Verify(_ => _.GetPagedAsync("http://nextpage/", _accessToken, _cancellationTokenSource.Token), Times.Once());
     }
 
     [Test]
@@ -98,14 +106,14 @@ public class ListDownloaderTests
                     .Setup(_ => _.AuthenticateAsync(_options, _cancellationTokenSource.Token))
                     .Returns(new ClientCredentialsToken { AccessToken = _accessToken });
         _mockGraphApiClient
-            .Setup(_ => _.GetAsync("https://graph.microsoft.com/v1.0/PATH?$top=10", _accessToken, _cancellationTokenSource.Token))
+            .Setup(_ => _.GetPagedAsync("https://graph.microsoft.com/v1.0/PATH?$top=10", _accessToken, _cancellationTokenSource.Token))
             .Returns(Either<ThrottledResponse, GraphApiPagedResponse<int>>.Right(new GraphApiPagedResponse<int>
             {
                 Value = new[] { 1, 2 },
                 Next = new Uri("http://nextpage")
             }));
         _mockGraphApiClient
-            .Setup(_ => _.GetAsync("http://nextpage/", _accessToken, _cancellationTokenSource.Token))
+            .Setup(_ => _.GetPagedAsync("http://nextpage/", _accessToken, _cancellationTokenSource.Token))
             .Returns(Either<ThrottledResponse, GraphApiPagedResponse<int>>.Right(new GraphApiPagedResponse<int>
             {
                 Value = new[] { 3, 4 }
@@ -114,7 +122,7 @@ public class ListDownloaderTests
         var result = await _sut.DownloadAsync(_path, _options, _emptyResiliencePipeline, _cancellationTokenSource.Token);
 
         _mockGraphApiClient
-           .Verify(_ => _.GetAsync("http://nextpage/", _accessToken, _cancellationTokenSource.Token), Times.Once());
+           .Verify(_ => _.GetPagedAsync("http://nextpage/", _accessToken, _cancellationTokenSource.Token), Times.Once());
         result.ShouldBeRight(_ => _.Should().BeEquivalentTo(new[] { 1, 2, 3, 4 }));
     }
 
@@ -126,20 +134,20 @@ public class ListDownloaderTests
                     .Setup(_ => _.AuthenticateAsync(_options, _cancellationTokenSource.Token))
                     .Returns(new ClientCredentialsToken { AccessToken = _accessToken });
         _mockGraphApiClient
-            .Setup(_ => _.GetAsync("https://graph.microsoft.com/v1.0/PATH?$top=10", _accessToken, _cancellationTokenSource.Token))
+            .Setup(_ => _.GetPagedAsync("https://graph.microsoft.com/v1.0/PATH?$top=10", _accessToken, _cancellationTokenSource.Token))
             .Returns(Either<ThrottledResponse, GraphApiPagedResponse<int>>.Right(new GraphApiPagedResponse<int>
             {
                 Value = new[] { 1, 2 },
                 Next = new Uri("http://nextpage")
             }));
         _mockGraphApiClient
-            .Setup(_ => _.GetAsync("http://nextpage/", _accessToken, _cancellationTokenSource.Token))
+            .Setup(_ => _.GetPagedAsync("http://nextpage/", _accessToken, _cancellationTokenSource.Token))
             .Returns(getError);
 
         var result = await _sut.DownloadAsync(_path, _options, _emptyResiliencePipeline, _cancellationTokenSource.Token);
 
         _mockGraphApiClient
-           .Verify(_ => _.GetAsync("http://nextpage/", _accessToken, _cancellationTokenSource.Token), Times.Once());
+           .Verify(_ => _.GetPagedAsync("http://nextpage/", _accessToken, _cancellationTokenSource.Token), Times.Once());
         result.ShouldBeLeft(err => err.Should().Be(getError));
     }
 }

@@ -49,9 +49,24 @@ var toDirOption = new Option<string>(
 {
     IsRequired = true
 };
+var loginRootUrlOption = new Option<string>(
+    new[] { "--login-root-url" },
+    getDefaultValue: () => Constants.LoginApiRootUrl,
+    "The root url of the login API.");
+var graphApiRootUrlOption = new Option<string>(
+    new[] { "--graph-api-root-url" },
+    getDefaultValue: () => Constants.GraphApiRootUrl,
+    "The root url of the Graph API.");
+var graphApiVersionOption = new Option<string>(
+    new[] { "--graph-api-version" },
+    getDefaultValue: () => Constants.GraphApiVersion,
+    "The version of the Graph API.");
 var groupsRetrieveCommand = new Command("download-groups");
 groupsRetrieveCommand.AddOption(pageSizeOption);
 groupsRetrieveCommand.AddOption(toDirOption);
+groupsRetrieveCommand.AddOption(loginRootUrlOption);
+groupsRetrieveCommand.AddOption(graphApiRootUrlOption);
+groupsRetrieveCommand.AddOption(graphApiVersionOption);
 groupsRetrieveCommand.Handler = CommandHandler.Create<ListDownloaderOptions, IServiceProvider, CancellationToken>(async (o, sp, ct) =>
 {
     var downloader = sp.GetRequiredService<IListDownloader<GraphApiGroup>>();

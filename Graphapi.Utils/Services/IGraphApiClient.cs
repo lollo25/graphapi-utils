@@ -5,6 +5,6 @@ using LanguageExt.Common;
 namespace Graphapi.Utils.Services;
 public interface IGraphApiClient<T>
 {
-    EitherAsync<Error, Either<ThrottledResponse, GraphApiPagedResponse<T>>> GetAsync(
+    EitherAsync<Error, Either<ThrottledResponse, GraphApiPagedResponse<T>>> GetPagedAsync(
         string address, string accessToken, CancellationToken cancellationToken);
 }
