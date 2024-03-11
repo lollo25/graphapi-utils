@@ -1,0 +1,77 @@
+name: dotnet
+
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
+  release:
+    types:
+    - created
+
+jobs:
+  dotnet:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: |
+          5.x
+          6.x
+          7.x
+
+    - name: restore dependencies
+      run: dotnet restore
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v2
+      with:
+        languages: 'csharp'
+
+    - name: build
+      run: |
+        dotnet build \
+          --configuration Release \
+          --no-restore \
+          /p:UseSharedCompilation=false
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+
+    - name: test
+      run: |
+        dotnet test \
+            --no-restore \
+            --configuration Release \
+            --verbosity normal
+      env:
+        CoverletOutputFormat: lcov,opencover
+        CollectCoverage: true
+
+    - name: retrieve list of coverage info reports
+      run: |
+        echo LCOV_REPORTS=$(find ./[Tt]est*/ -name "coverage.info" | paste -sd ";") >> $GITHUB_ENV
+
+    - name: merge code coverage data
+      uses: danielpalme/ReportGenerator-GitHub-Action@5.1.12
+      with:
+        reports: '${{ env.LCOV_REPORTS }}'
+        reporttypes: 'lcov'
+
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v3
+
+    - name: publish code coverage results
+      if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]' }}
+      uses: romeovs/lcov-reporter-action@v0.3.1
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        lcov-file: ./coveragereport/lcov.info 
