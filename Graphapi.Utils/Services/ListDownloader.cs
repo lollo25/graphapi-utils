@@ -41,7 +41,7 @@ public class ListDownloader<T> : IListDownloader<T>
                     _client.GetAsync(address, clientCredentials.AccessToken, cancellationToken),
                     cancellationToken).Map(_ => _.ValueUnsafe());
         return 
-            GetAsync($"{Constants.GraphApiRootUrl}/{Constants.GraphApiVersion}/{path}?$top={options.Top}")
+            GetAsync($"{Constants.GraphApiRootUrl}/{Constants.GraphApiVersion}/{path}?$top={options.PageSize}")
                 .Bind(_ =>
                     TailRecursion
                         .ExecuteAsync(() => Execute(_, GetAsync))

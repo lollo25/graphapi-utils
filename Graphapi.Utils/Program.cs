@@ -32,16 +32,25 @@ var services =
 
 services
     .AddHttpClient(
-        Constants.MicrosoftLoginClient, 
-        sp => sp.BaseAddress = new Uri("https://login.microsoftonline.com"));
+        Constants.MicrosoftLoginClient,
+        sp => sp.BaseAddress = new Uri(Constants.LoginApiRootUrl));
 services
     .AddHttpClient(
         Constants.GraphApiClient);
 
-var topOption = new Option<int>(new[] { "--top" }, getDefaultValue: () => 100, "The page size of each request.");
-var toDirOption = new Option<string>(new[] { "--directory", "-dir" }, getDefaultValue: () => "/MSGraph/Groups", "The directory where the items will be saved into.") { IsRequired = true };
+var pageSizeOption = new Option<int>(
+    new[] { "--page-size" },
+    getDefaultValue: () => Constants.DefaultPageSize,
+    "The page size of each request.");
+var toDirOption = new Option<string>(
+    new[] { "--directory", "-dir" },
+    getDefaultValue: () => "/MSGraph/Groups",
+    "The directory where the items will be saved into.")
+{
+    IsRequired = true
+};
 var groupsRetrieveCommand = new Command("download-groups");
-groupsRetrieveCommand.AddOption(topOption);
+groupsRetrieveCommand.AddOption(pageSizeOption);
 groupsRetrieveCommand.AddOption(toDirOption);
 groupsRetrieveCommand.Handler = CommandHandler.Create<ListDownloaderOptions, IServiceProvider, CancellationToken>(async (o, sp, ct) =>
 {
@@ -64,24 +73,41 @@ groupsRetrieveCommand.Handler = CommandHandler.Create<ListDownloaderOptions, ISe
 });
 
 var rootCommand = new RootCommand { groupsRetrieveCommand };
-var verboseOption = new Option<bool>(new[] { "--verbose", "-v" }, "Lowers minimum logging level to debug");
-var tenantOption = new Option<string>(new[] { "--tenant", "-t" }, "The directory tenant that you want to request permission from. The value can be in GUID or a friendly name format.") { IsRequired = true };
-var appIdOption = new Option<string>(new[] { "--app-id", "-aid" }, "The application ID that the Azure app registration portal assigned when you registered your app") { IsRequired = true };
-var secretOption = new Option<string>(new[] { "--app-secret", "-as" }, "The client secret that you generated for your app in the app registration portal.") { IsRequired = true };
+var verboseOption = new Option<bool>(
+    new[] { "--verbose", "-v" },
+    "Lowers minimum logging level to debug");
+var tenantOption = new Option<string>(
+    new[] { "--tenant", "-t" },
+    "The directory tenant that you want to request permission from. The value can be in GUID or a friendly name format.")
+{
+    IsRequired = true
+};
+var appIdOption = new Option<string>(
+    new[] { "--app-id", "-aid" },
+    "The application ID that the Azure app registration portal assigned when you registered your app")
+{
+    IsRequired = true
+};
+var secretOption = new Option<string>(
+    new[] { "--app-secret", "-as" },
+    "The client secret that you generated for your app in the app registration portal.")
+{
+    IsRequired = true
+};
 rootCommand.AddGlobalOption(verboseOption);
 rootCommand.AddGlobalOption(tenantOption);
 rootCommand.AddGlobalOption(appIdOption);
 rootCommand.AddGlobalOption(secretOption);
-var builder = 
+var builder =
     new CommandLineBuilder(rootCommand)
         .UseDefaults()
         .AddMiddleware(async (context, next) =>
         {
             await using var serviceProvider = services.BuildServiceProvider();
             context.BindingContext.AddService<IServiceProvider>(_ => serviceProvider);
-            foreach(var serviceType in services.Select(_ => _.ServiceType))
+            foreach (var serviceType in services.Select(_ => _.ServiceType))
                 context.BindingContext.AddService(
-                    serviceType, 
+                    serviceType,
                     _ => serviceProvider.GetRequiredService(serviceType));
             await next(context);
         })
